@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <context:component-scan base-package="zinchenko.dao"/>
+    <context:component-scan base-package="zinchenko.service"/>
+    <context:component-scan base-package="zinchenko"/>
+
+    <context:property-placeholder location="classpath:*.properties"/>
+
+    <bean id="transactionManager"
+          class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <tx:annotation-driven />
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close">
+        <property name="driverClassName" value="org.h2.Driver" />
+        <!--<property name="driverClassName" value="org.postgresql.Driver" />-->
+        <!--<property name="url" value="jdbc:h2:mem:test" />-->
+        <!--<property name="url" value="jdbc:h2:tcp://localhost:6061/~/test" />-->
+        <property name="url" value="${database.url}" />
+        <!--<property name="url" value="jdbc:postgresql://localhost:5432/lb" />-->
+        <property name="username" value="${database.username}" />
+        <property name="password" value="${database.password}" />
+    </bean>
+
+    <!--<bean id="builder" class="org.springframework.orm.hibernate4.LocalSessionFactoryBuilder">-->
+        <!--<constructor-arg>-->
+            <!--<-->
+        <!--</constructor-arg>-->
+    <!--</bean>-->
+
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="annotatedPackages" value="zinchenko.domain"/>
+        <property name="dataSource" ref="dataSource" />
+        <property name="packagesToScan" value="zinchenko.domain"/>
+        <property name="configLocation" value="/"/>
+        <property name="hibernateProperties">
+            <props>
+                <!--<prop key="hibernate.current_session_context_class">thread</prop>-->
+                <prop key="hibernate.dialect">org.hibernate.dialect.H2Dialect</prop>
+                <!--<prop key="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</prop>-->
+                <prop key="hibernate.hbm2ddl.auto">create-drop</prop>
+                <prop key="hibernate.jdbc.batch_size">20</prop>
+                <prop key="show_sql">true</prop>
+                <prop key="format_sql">true</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!--Messages-->
+    <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="${message.url}"/>
+    </bean>
+
+    <bean id="newArticleDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="articleQueue"/>
+    </bean>
+
+    <bean id="articleJmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="connectionFactory" />
+        <property name="defaultDestination" ref="newArticleDestination" />
+    </bean>
+
+    <bean id="newCommentDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="commentQueue"/>
+    </bean>
+
+    <bean id="commentJmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="connectionFactory" />
+        <property name="defaultDestination" ref="newCommentDestination" />
+    </bean>
+
+    <!--Camel-->
+    <bean id="activeMQComponent" class="org.apache.activemq.camel.component.ActiveMQComponent">
+        <property name="brokerURL" value="${message.url}"/>
+    </bean>
+    <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+        <route>
+            <from uri="jms:articleQueue"/>
+            <bean ref="articleService" method="sendEmailToCategorySubscribers"/>
+        </route>
+        <route>
+            <from uri="jms:commentQueue"/>
+            <bean ref="commentService" method="sendEmailToCategorySubscribers"/>
+        </route>
+    </camelContext>
+
+    <!--Email-->
+    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="${email.smtp.host}" />
+        <property name="port" value="${email.smtp.port}" />
+        <property name="username" value="${email.smtp.username}" />
+        <property name="password" value="${email.smtp.password}" />
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">true</prop>
+                <prop key="mail.smtp.starttls.enable">true</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="velocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean">
+        <property name="velocityProperties">
+            <value>
+                resource.loader=class
+                class.resource.loader.class=org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
+            </value>
+        </property>
+    </bean>
+
+    <bean id="systemSinglePageConfig" class="zinchenko.domain.SystemSinglePageConfig">
+        <property name="articleImagePath" value="${single.page.config.article.image.path}"/>
+    </bean>
+
+</beans>

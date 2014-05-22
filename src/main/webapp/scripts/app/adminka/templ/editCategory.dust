@@ -1,0 +1,28 @@
+<form class="edit-category form-horizontal" role="form">
+    <input type="hidden" name="id" value="{category.id}">
+
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Группа</label>
+
+        <div class="col-sm-10">
+            <select name="group[id]" class="form-control">
+                {#groups}
+                <option value="{id}" class="form-control" {@eq key=id value=group.id}selected="true"{/eq} >{name}</option>
+                {/groups}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="name" class="col-sm-2 control-label">Название</label>
+
+        <div class="col-sm-10">
+            <input id="name" type="text" name="name" class="form-control"
+                   value="{category.name}" placeholder="Название категории." required>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-12">
+            <button type="button" class="btn btn-success pull-right save-category">Сохранить</button>
+        </div>
+    </div>
+</form>

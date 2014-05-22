@@ -1,0 +1,32 @@
+<!--<script type="text/javascript" src="/js/layouts/header.js"></script>-->
+<div class="main-container">
+    <div class="header">
+        <div class="groups">
+            {#groups}
+            <div class="group">
+                <a class="category-link" href="" onclick="return false">{name}</a>
+                <ul class="categories display-none">
+                    {#categories}
+                    <li class="category">
+                        <a href="#articlesList/{id}">{name}</a>
+                    </li>
+                    {/categories}
+                </ul>
+            </div>
+            {/groups}
+            <div class="group">
+                <a class="category-link" href="#adminka">Adminka</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-column">sdasdcsadcs sadfsdfs f
+        sdasdcsadcs sadfsdfs f
+        sdasdcsadcs sadfsdfs f
+        sdasdcsadcs sadfsdfs f
+        sdasdcsadcs sadfsdfs f
+        sdasdcsadcs sadfsdfs f
+    </div>
+
+    <div class="content-block"></div>
+</div>
